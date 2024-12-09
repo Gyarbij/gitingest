@@ -1,32 +1,25 @@
-# Use the latest official Python runtime as a parent image
-FROM python:3.14-rc-slim
+FROM python:3.13.1-slim
 
-# Set the working directory in the container
+RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
-# Create a non-root user and group with limited privileges
 RUN groupadd -r gitingest && useradd --no-log-init -r -g gitingest gitingest
 
-# Copy the requirements file into the container at /app with appropriate ownership
 COPY --chown=gitingest:gitingest requirements.txt /app/
 
-# Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application code into the container with appropriate ownership
 COPY --chown=gitingest:gitingest . /app/
 
-# Create a directory for temporary files with correct ownership
 RUN mkdir -p /app/tmp && chown -R gitingest:gitingest /app/tmp
 
-# Change to the non-root user
 USER gitingest
 
-# Expose the port
-EXPOSE 42069
+EXPOSE 8420
 
-# Define environment variable for the port (can be overridden with docker-compose)
-ENV PORT=42069
+ENV PORT=8420
 
-# Run uvicorn when the container launches
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "42069"]
+WORKDIR /app/src
+
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8420"]
